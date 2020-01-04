@@ -6,12 +6,13 @@ import java.util.GregorianCalendar;
 
 public class DBA {
     private static String databaseName = "blackfriday";
-    public static ProductList loadProducts(Account user) {
+
+    public static ProductList loadProducts(Account DBM) throws SQLException {
         ProductList products = new ProductList(new ArrayList<Product>());
         try (
                 Connection conn = DriverManager.getConnection(
                         "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
-                        user.getUsername(), user.getPassword());
+                        DBM.getUsername(), DBM.getPassword());
                 Statement stmt = conn.createStatement()
         ) {
             System.out.println("Connecting to database");
@@ -30,8 +31,7 @@ public class DBA {
                             rset.getDouble("minPrice"),
                             rset.getDouble("blackfridayDiscount"),
                             rset.getInt("quantity")));
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("Database contains incorrect values"); //TODO:
                 }
@@ -39,21 +39,20 @@ public class DBA {
             }
             System.out.println("Total number of records = " + rowCount);
 
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            System.out.println(printAuthorizationErrorMessage()); //TODO: Appropriate action, not just notifying
+        } catch (SQLException e) {
+            throw new SQLException(e.getCause());
         }
 
         return products;
     }
 
-    public static void insertIntoProducts(Account user, Product product) {
+    public static void insertIntoProducts(Account DBM, Product product) throws SQLException {
         String strInsert = "INSERT INTO blackfriday.products (name, category, price, minPrice, blackfridayDiscount, quantity)" +
                 " values (?, ?, ?, ?, ?, ?)";
         try (
                 Connection conn = DriverManager.getConnection(
                         "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
-                        user.getUsername(), user.getPassword());
+                        DBM.getUsername(), DBM.getPassword());
                 PreparedStatement preparedStmt = conn.prepareStatement(strInsert)
         ) {
             preparedStmt.setString(1, product.getName().toLowerCase());
@@ -66,18 +65,17 @@ public class DBA {
             System.out.println("The SQL statement is: " + strInsert + "\n"); // Echo For debugging
             ResultSet rset = (preparedStmt.execute()) ? preparedStmt.getResultSet() : null; //TODO: Maybe Echo
 
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            System.out.println(printAuthorizationErrorMessage()); //TODO: Appropriate action, not just notifying
+        } catch (SQLException e) {
+            throw new SQLException(e.getCause());
         }
     }
 
-    public static void updateProduct(Account user, Product product) {
+    public static void updateProduct(Account DBM, Product product) throws SQLException {
         String strUpdate = "UPDATE blackfriday.products set name = ?, category = ?, price = ?, minPrice = ?, blackfridayDiscount = ?, quantity = ? where idproducts = ?";
         try (
                 Connection conn = DriverManager.getConnection(
                         "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
-                        user.getUsername(), user.getPassword());   // For MySQL only
+                        DBM.getUsername(), DBM.getPassword());   // For MySQL only
                 PreparedStatement preparedStmt = conn.prepareStatement(strUpdate)
         ) {
             preparedStmt.setString(1, product.getName());
@@ -91,37 +89,35 @@ public class DBA {
             System.out.println("The SQL statement is: " + strUpdate + "\n"); // Echo For debugging
             ResultSet rset = (preparedStmt.execute()) ? preparedStmt.getResultSet() : null;
 //
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            System.out.println(printAuthorizationErrorMessage()); //TODO: Appropriate action, not just notifying
+        } catch (SQLException e) {
+            throw new SQLException(e.getCause());
         }
     }
 
-    public static void deleteFromProducts(Account user, Product product) {
+    public static void deleteFromProducts(Account DBM, Product product) throws SQLException {
         String strDelete = "DELETE FROM blackfriday.products where idproducts = ?";
         try (
                 Connection conn = DriverManager.getConnection(
                         "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
-                        user.getUsername(), user.getPassword());   // For MySQL only
+                        DBM.getUsername(), DBM.getPassword());   // For MySQL only
                 PreparedStatement preparedStmt = conn.prepareStatement(strDelete)
         ) {
             preparedStmt.setFloat(1, product.getID());
             System.out.println("Connecting to database");
             System.out.println("The SQL statement is: " + strDelete + "\n"); // Echo For debugging
             ResultSet rset = (preparedStmt.execute()) ? preparedStmt.getResultSet() : null; //TODO: Maybe echo the results
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            System.out.println(printAuthorizationErrorMessage()); //TODO: Appropriate action, not just notifying
+        } catch (SQLException e) {
+            throw new SQLException(e.getCause());
         }
     }
 
-    public static double revenueInPeriod(Account user, GregorianCalendar start, GregorianCalendar end) {
+    public static double revenueInPeriod(Account DBM, GregorianCalendar start, GregorianCalendar end) throws SQLException {
         double revenue = 0;
         String strSelect = "SELECT price, quantity FROM sales WHERE date >= ? AND date < ?";
         try (
                 Connection conn = DriverManager.getConnection(
                         "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
-                        user.getUsername(), user.getPassword());
+                        DBM.getUsername(), DBM.getPassword());
                 PreparedStatement preparedStmt = conn.prepareStatement(strSelect)
         ) {
             System.out.println("Connecting to database");
@@ -137,34 +133,32 @@ public class DBA {
             }
             System.out.println("Total number of records = " + rowCount);
 
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            System.out.println(printAuthorizationErrorMessage()); //TODO: Appropriate action, not just notifying
+        } catch (SQLException e) {
+            throw new SQLException(e.getCause());
         }
 
         return revenue;
     }
 
 
-    public static void insertIntoSales(Account user, Product product, int quantity) {
+    public static void insertIntoSales(Account DBM, Account customer, Product toSell) throws SQLException {
         String strInsert = "INSERT INTO blackfriday.sales (idproduct, price, quantity, customer)" +
                 " VALUES (?, ?, ?, ?)";
         try (
                 Connection conn = DriverManager.getConnection(
                         "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
-                        user.getUsername(), user.getPassword());
+                        DBM.getUsername(), DBM.getPassword());
                 PreparedStatement preparedStmt = conn.prepareStatement(strInsert)
         ) {
-            preparedStmt.setInt(1, product.getID());
-            preparedStmt.setDouble(2, product.getPrice() * (1 - product.getBlackfridayDiscount()));
-            preparedStmt.setInt(3, quantity);
-            preparedStmt.setString(4, user.getUsername());
+            preparedStmt.setInt(1, toSell.getID());
+            preparedStmt.setDouble(2, toSell.getPrice() * (1 - toSell.getBlackfridayDiscount()));
+            preparedStmt.setInt(3, toSell.getQuantity());
+            preparedStmt.setString(4, customer.getUsername());
             System.out.println("The SQL statement is: " + strInsert + "\n"); // Echo For debugging
             ResultSet rset = (preparedStmt.execute()) ? preparedStmt.getResultSet() : null; //TODO: Maybe Echo
 
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            System.out.println(printAuthorizationErrorMessage()); //TODO: Appropriate action, not just notifying
+        } catch (SQLException e) {
+            throw new SQLException(e.getCause());
         }
     }
 
@@ -193,4 +187,7 @@ public class DBA {
         return "You are not authorized to perform such queries";
     }
 
+    public static boolean ValidateAccount(Account account) {//TODO: Validate accounts through DB
+        return false;
+    }
 }

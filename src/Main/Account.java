@@ -1,6 +1,6 @@
 package Main;
 
-public abstract class Account {
+public class Account {
     private String username;
     private String password;
 
@@ -25,5 +25,4 @@ public abstract class Account {
         this.password = password;
     }
 
-    public abstract ProductList accessProducts();
 }
