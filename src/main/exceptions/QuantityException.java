@@ -1,4 +1,4 @@
-package Main.Exceptions;
+package main.exceptions;
 
 public class QuantityException extends Exception{
     public QuantityException(String message) {

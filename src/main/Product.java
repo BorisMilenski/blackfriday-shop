@@ -1,4 +1,4 @@
-package Main;
+package main;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -12,7 +12,6 @@ public class Product implements Serializable {
     private double minPrice;
     private double blackfridayDiscount;
     private double actualPrice;
-    private double popularity;
 
     public enum Category {
         tech,
@@ -44,16 +43,15 @@ public class Product implements Serializable {
 
     public Product() {
         this.ID = -1;
-        this.name = " ";
+        this.name = "default";
         this.category = Category.misc;
         this.normalPrice = 0;
         this.minPrice = 0;
         this.blackfridayDiscount = 0;
         this.quantity = 0;
-        this.popularity = 0;
     }
 
-    public boolean modify(Product product) {
+    public void modify(Product product) {
         if (this.ID != product.getID()) {
             this.setID(product.getID());
         }
@@ -69,13 +67,12 @@ public class Product implements Serializable {
         if (this.getMinPrice() != product.getMinPrice()) {
             this.setMinPrice(product.getMinPrice());
         }
-        if (this.getBlackfridayDiscount() != product.getBlackfridayDiscount()) {
+        if ((this.getBlackfridayDiscount() != product.getBlackfridayDiscount()) || product.getBlackfridayDiscount() == 0){
             this.setBlackfridayDiscount(product.getBlackfridayDiscount());
         }
         if (this.getQuantity() != product.getQuantity()) {
             this.setQuantity(product.getQuantity());
         }
-        return true;
     }
 
     public int getID() {
@@ -110,7 +107,7 @@ public class Product implements Serializable {
         if (normalPrice < 0) {
             throw new ArithmeticException();
         }
-        this.normalPrice = (normalPrice > this.minPrice) ? normalPrice : this.minPrice;
+        this.normalPrice = Math.max(normalPrice, this.minPrice);
     }
 
     public double getMinPrice() {
@@ -150,14 +147,6 @@ public class Product implements Serializable {
         }
     }
 
-    public double getPopularity() {
-        return popularity;
-    }
-
-    public void setPopularity(double popularity) {
-        this.popularity = popularity;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -168,13 +157,12 @@ public class Product implements Serializable {
                 Double.compare(product.getMinPrice(), getMinPrice()) == 0 &&
                 Double.compare(product.getBlackfridayDiscount(), getBlackfridayDiscount()) == 0 &&
                 getQuantity() == product.getQuantity() &&
-                Double.compare(product.getPopularity(), getPopularity()) == 0 &&
                 getName().equals(product.getName()) &&
                 getCategory().equals(product.getCategory());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getID(), getName(), getCategory(), getNormalPrice(), getMinPrice(), getBlackfridayDiscount(), getQuantity(), getPopularity());
+        return Objects.hash(getID(), getName(), getCategory(), getNormalPrice(), getMinPrice(), getBlackfridayDiscount(), getQuantity());
     }
 }

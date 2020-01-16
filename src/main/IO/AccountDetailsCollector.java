@@ -1,6 +1,6 @@
-package Main.IO;
+package main.IO;
 
-import Main.Account;
+import main.Account;
 import org.beryx.textio.ReadAbortedException;
 import org.beryx.textio.TextIO;
 import org.beryx.textio.TextTerminal;
@@ -20,13 +20,14 @@ public class AccountDetailsCollector implements Function<TextIO, Account> {
     public Account apply(TextIO textIO) {
         TextTerminal<?> terminal = textIO.getTextTerminal();
         addTask(textIO, "Username", account::getUsername, account::setUsername, 1, false, "^[a-zA-Z0-9_-]+$");//TODO: Review Lambda expressions (functional interfaces) and method references!
-        addTask(textIO, "Password", account::getPassword, account::setPassword, 8, true, "(([a-z])+([A-Z])+([0-9])+)");
+        addTask(textIO, "Password", account::getPassword, account::setPassword, 8, true, "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$");
         int step = 0;
         while(step < operations.size()) {
             terminal.setBookmark("bookmark_" + step);
             try {
                 operations.get(step).run();
             } catch (ReadAbortedException e) {
+                if (step == 0) throw e;
                 if(step > 0) step--;
                 terminal.resetToBookmark("bookmark_" + step);
                 continue;

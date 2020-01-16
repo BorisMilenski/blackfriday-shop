@@ -1,11 +1,12 @@
-package Main.Server;
+package main.server;
 
-import Main.*;
-import Main.Exceptions.InvalidAccountException;
-import Main.Exceptions.QuantityException;
+import main.*;
+import main.exceptions.InvalidAccountException;
+import main.exceptions.QuantityException;
 
 import java.net.InetAddress;
 import java.sql.SQLException;
+import java.util.GregorianCalendar;
 
 /*
 Client -> Server
@@ -17,8 +18,9 @@ PURCHASE <ProductList> - to purchase
 INSERT <ProductList> - to insert
 EDIT <ProductList> - to edit
 DELETE <ProductList> - to delete
-STARTBLACKFRIDAY <ProductList> - to start BlackFriday on products in list
-ENDBLACKFRIDAY - to end BlackFriday for all products
+REVENUE <GregorianCalendar[2]> - to get revenue in period [date1 - date2)
+START_BLACK_FRIDAY <ProductList> - to start BlackFriday on products in list
+END_BLACK_FRIDAY - to end BlackFriday for all products
 
 */
 public class ServerProtocol {
@@ -26,24 +28,28 @@ public class ServerProtocol {
     public static Message parseMessage(Message message, Account user, InetAddress inetAddress) throws QuantityException, SQLException, InvalidAccountException {
         switch (message.getCode()) {
             case PRODUCTS:
-                return new Message(MessageIndex.PRODUCTS, Server.getProducts());
+                return new Message(Message.MessageIndex.PRODUCTS, Server.getProducts());
             case LOGIN:
                 Account account = (Account) message.getPayload();
-                if ((account = DBA.checkForExistingAccount(account)) != null)
-                {
+                if ((account = DBA.checkForExistingAccount(account)) != null) {
                     if (account.isEmployee() && !Server.getActiveEmployees().containsKey(inetAddress)) {
                         Server.addActiveEmployee(inetAddress, account);
                     } else if (!account.isEmployee() && !Server.getActiveUsers().containsKey(inetAddress)) {
                         Server.addActiveUser(inetAddress, account);
                     }
-                }
-                else{
+                } else {
                     throw new InvalidAccountException("Account not found");
                 }
-                return new Message(MessageIndex.LOGIN, account);
+                return new Message(Message.MessageIndex.LOGIN, account);
             case CREATE:
-                DBA.createAccount((Account) message.getPayload());
-                return new Message(MessageIndex.CREATE, message.getPayload());
+                account  = (Account) message.getPayload();
+                if (!account.isEmployee() || Server.getActiveEmployees().containsKey(inetAddress)) {
+                    DBA.createAccount((Account) message.getPayload());
+                }
+                else{
+                    return new Message(Message.MessageIndex.ERROR, "You aren't authorized to perform such actions!");
+                }
+                return new Message(Message.MessageIndex.CREATE, message.getPayload());
             case PURCHASE:
                 ProductList toPurchase = (ProductList) message.getPayload();
                 for (Product item : toPurchase.getProducts()) {
@@ -54,7 +60,7 @@ public class ServerProtocol {
                     }
                 }
                 Server.updateProducts();
-                return new Message(MessageIndex.SUCCESS, true);
+                return new Message(Message.MessageIndex.SUCCESS, true);
             case INSERT:
                 ProductList toInsert = (ProductList) message.getPayload();
                 for (Product item : toInsert.getProducts()) {
@@ -65,7 +71,7 @@ public class ServerProtocol {
                     }
                 }
                 Server.updateProducts();
-                return new Message(MessageIndex.SUCCESS, true);
+                return new Message(Message.MessageIndex.SUCCESS, true);
             case EDIT:
                 ProductList toEdit = (ProductList) message.getPayload();
                 for (Product item : toEdit.getProducts()) {
@@ -76,7 +82,7 @@ public class ServerProtocol {
                     }
                 }
                 Server.updateProducts();
-                return new Message(MessageIndex.SUCCESS, true);
+                return new Message(Message.MessageIndex.SUCCESS, true);
             case DELETE:
                 ProductList toDelete = (ProductList) message.getPayload();
                 for (Product item : toDelete.getProducts()) {
@@ -87,20 +93,29 @@ public class ServerProtocol {
                     }
                 }
                 Server.updateProducts();
-                return new Message(MessageIndex.SUCCESS, true);
-            case STARTBLACKFRIDAY:
+                return new Message(Message.MessageIndex.SUCCESS, true);
+            case START_BLACK_FRIDAY:
                 ProductList promotionalItems = (ProductList) message.getPayload();
                 BlackFriday.startCampaign(promotionalItems);
                 Server.updateProducts();
-                return new Message(MessageIndex.SUCCESS, true);
-            case ENDBLACKFRIDAY:
+                return new Message(Message.MessageIndex.SUCCESS, true);
+            case END_BLACK_FRIDAY:
                 ProductList items = (ProductList) message.getPayload();
                 BlackFriday.endCampaign(items);
                 Server.updateProducts();
-                return new Message(MessageIndex.SUCCESS, true);
+                return new Message(Message.MessageIndex.SUCCESS, true);
+            case REVENUE:
+                GregorianCalendar[] dates = (GregorianCalendar[]) message.getPayload();
+                try {
+                    return new Message(Message.MessageIndex.VALUE, ManageSales.revenueInPeriod(dates[0], dates[1]));
+                } catch (SQLException e) {
+                    throw new SQLException(e.getCause());
+                }
+
         }
         return null;
     }
 
-
 }
+
+

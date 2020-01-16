@@ -1,22 +1,22 @@
-package Main.Server;
+package main.server;
 
-import Main.Account;
-import Main.Product;
-import Main.ProductList;
+import main.Account;
+import main.Product;
+import main.ProductList;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 
 public class DBA {
-    private static String databaseName = "blackfriday";
-    private static Account DBM = new Account("DBM", "Tn65z6&dDObh@YJRRt39OwhV", true);
+    private static final String DATABASE_NAME = "blackfriday";
+    private static final Account DBM = new Account("DBM", "Tn65z6&dDObh@YJRRt39OwhV", true);
 
     public static ProductList loadProducts() throws SQLException {
-        ProductList products = new ProductList(new ArrayList<Product>());
+        ProductList products = new ProductList(new ArrayList<>());
         try (
                 Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
+                        "jdbc:mysql://localhost:3306/" + DATABASE_NAME + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
                         DBM.getUsername(), DBM.getPassword());
                 Statement stmt = conn.createStatement()
         ) {
@@ -56,7 +56,7 @@ public class DBA {
                 " values (?, ?, ?, ?, ?, ?)";
         try (
                 Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
+                        "jdbc:mysql://localhost:3306/" + DATABASE_NAME + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
                         DBM.getUsername(), DBM.getPassword());
                 PreparedStatement preparedStmt = conn.prepareStatement(strInsert)
         ) {
@@ -79,7 +79,7 @@ public class DBA {
         String strUpdate = "UPDATE blackfriday.products set name = ?, category = ?, price = ?, minPrice = ?, blackfridayDiscount = ?, quantity = ? where idproducts = ?";
         try (
                 Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
+                        "jdbc:mysql://localhost:3306/" + DATABASE_NAME + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
                         DBM.getUsername(), DBM.getPassword());   // For MySQL only
                 PreparedStatement preparedStmt = conn.prepareStatement(strUpdate)
         ) {
@@ -104,7 +104,7 @@ public class DBA {
         String strDelete = "DELETE FROM blackfriday.products where idproducts = ?";
         try (
                 Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
+                        "jdbc:mysql://localhost:3306/" + DATABASE_NAME + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
                         DBM.getUsername(), DBM.getPassword());   // For MySQL only
                 PreparedStatement preparedStmt = conn.prepareStatement(strDelete)
         ) {
@@ -114,6 +114,9 @@ public class DBA {
             System.out.println("Records deleted");
         } catch (SQLException e) {
             throw new SQLException(e.getCause());
+        }catch (NullPointerException e){
+            System.out.println("No product to delete");
+            return;
         }
     }
 
@@ -122,7 +125,7 @@ public class DBA {
         String strSelect = "SELECT price, quantity FROM blackfriday.sales WHERE date >= ? AND date < ?";
         try (
                 Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
+                        "jdbc:mysql://localhost:3306/" + DATABASE_NAME + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
                         DBM.getUsername(), DBM.getPassword());
                 PreparedStatement preparedStmt = conn.prepareStatement(strSelect)
         ) {
@@ -130,9 +133,10 @@ public class DBA {
             preparedStmt.setObject(1, new java.sql.Timestamp(start.getTime().getTime()));
             preparedStmt.setObject(2, new java.sql.Timestamp(end.getTime().getTime()));
             ResultSet rset = (preparedStmt.execute()) ? preparedStmt.getResultSet() : null;
-            int rowCount = 0;
-            while (rset.next()) {
-                revenue += rset.getDouble(1) * rset.getInt(2);
+            if (rset != null) {
+                while (rset.next()) {
+                    revenue += rset.getDouble(1) * rset.getInt(2);
+                }
             }
             System.out.println("Revenue = " + revenue);
 
@@ -143,13 +147,12 @@ public class DBA {
         return revenue;
     }
 
-
     public static void insertIntoSales(Account customer, Product toSell) throws SQLException {
         String strInsert = "INSERT INTO blackfriday.sales (idproduct, price, quantity, customer)" +
                 " VALUES (?, ?, ?, ?)";
         try (
                 Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
+                        "jdbc:mysql://localhost:3306/" + DATABASE_NAME + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
                         DBM.getUsername(), DBM.getPassword());
                 PreparedStatement preparedStmt = conn.prepareStatement(strInsert)
         ) {
@@ -170,7 +173,7 @@ public class DBA {
         Account out = null;
         try (
                 Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
+                        "jdbc:mysql://localhost:3306/" + DATABASE_NAME + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
                         DBM.getUsername(), DBM.getPassword());
                 PreparedStatement preparedStmt = conn.prepareStatement(strSelect)
         ) {
@@ -179,7 +182,7 @@ public class DBA {
             preparedStmt.setString(1, account.getUsername());
             preparedStmt.setString(2, account.getPassword());
             ResultSet rset = (preparedStmt.execute()) ? preparedStmt.getResultSet() : null;
-            if(rset.next()) {
+            if (rset != null && rset.next()) {
                 out = new Account(rset.getString("username"), rset.getString("password"), rset.getBoolean("employee"));
             }
         } catch (SQLException e) {
@@ -190,10 +193,9 @@ public class DBA {
 
     public static void createAccount(Account account) throws SQLException {
         String strInsert = "INSERT INTO blackfriday.accounts(username, password, employee) VALUES (?, ?, ?)";
-        Account out = null;
         try (
                 Connection conn = DriverManager.getConnection(
-                        "jdbc:mysql://localhost:3306/" + databaseName + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
+                        "jdbc:mysql://localhost:3306/" + DATABASE_NAME + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC",
                         DBM.getUsername(), DBM.getPassword());
                 PreparedStatement preparedStmt = conn.prepareStatement(strInsert)
         ) {

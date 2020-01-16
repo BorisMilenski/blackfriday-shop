@@ -1,34 +1,24 @@
-package Main.Server;
-
-import Main.Account;
-import Main.ProductList;
+package main.server;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
 
 public class MultiThreadedServer implements Runnable {
 
 
-    protected int serverPort = 8080;
+    protected final int SERVER_PORT;
     protected ServerSocket serverSocket = null;
     protected boolean isStopped = false;
-    protected Thread runningThread = null;
-    protected Server server = null;
 
     public MultiThreadedServer(int port) {
-        this.serverPort = port;
+        this.SERVER_PORT = port;
     }
 
     public void run() {
-        synchronized (this) {
-            this.runningThread = Thread.currentThread();
-        }
         openServerSocket();
         while (!isStopped()) {
-            Socket clientSocket = null;
+            Socket clientSocket;
             try {
                 clientSocket = this.serverSocket.accept();
             } catch (IOException e) {
@@ -41,7 +31,7 @@ public class MultiThreadedServer implements Runnable {
             }
             new Thread(
                     new ServerTask(
-                            clientSocket, "Multithreaded Server", server)
+                            clientSocket)
             ).start();
         }
         System.out.println("Server Stopped.");
@@ -63,7 +53,7 @@ public class MultiThreadedServer implements Runnable {
 
     private void openServerSocket() {
         try {
-            this.serverSocket = new ServerSocket(this.serverPort);
+            this.serverSocket = new ServerSocket(this.SERVER_PORT);
         } catch (IOException e) {
             throw new RuntimeException("Cannot open port 8080", e);
         }

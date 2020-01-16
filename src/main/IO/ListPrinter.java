@@ -1,7 +1,7 @@
-package Main.IO;
+package main.IO;
 
-import Main.Product;
-import Main.ProductList;
+import main.Product;
+import main.ProductList;
 import org.beryx.textio.TextIO;
 import org.beryx.textio.TextTerminal;
 
@@ -14,12 +14,12 @@ import java.util.function.Consumer;
 
 
 public class ListPrinter implements Consumer<TextIO> {
-    private ProductList toPrint = null;
-    private boolean[] fieldsToDisplay = null;
+    private final ProductList TO_PRINT;
+    private final boolean[] FIELDS_TO_DISPLAY;
 
-    public ListPrinter(ProductList toPrint, boolean[] fieldsToDisplay) {
-        this.toPrint = toPrint;
-        this.fieldsToDisplay = fieldsToDisplay;
+    public ListPrinter(ProductList TO_PRINT, boolean[] FIELDS_TO_DISPLAY) {
+        this.TO_PRINT = TO_PRINT;
+        this.FIELDS_TO_DISPLAY = FIELDS_TO_DISPLAY;
     }
 
     @Override
@@ -29,10 +29,10 @@ public class ListPrinter implements Consumer<TextIO> {
                     t.setPromptUnderline(true);
                     t.setPromptBold(true);
                 }, (t) ->
-                        terminal.print(getColumnLabels(fieldsToDisplay))
+                        terminal.print(getColumnLabels(FIELDS_TO_DISPLAY))
         );
-        for (int i = 0; i < toPrint.getProducts().size(); i++) {
-            terminal.print(getDataFromProduct(i + 1, toPrint.get(i), fieldsToDisplay));
+        for (int i = 0; i < TO_PRINT.getProducts().size(); i++) {
+            terminal.print(getDataFromProduct(i + 1, TO_PRINT.get(i), FIELDS_TO_DISPLAY));
         }
         terminal.println();
     }
@@ -55,8 +55,8 @@ public class ListPrinter implements Consumer<TextIO> {
     public String getDataFromProduct(int index, Product product, boolean[] fieldsToInclude) {
         Field[] fields = Product.class.getDeclaredFields();
         ArrayList<Method> methods= new ArrayList<>();
-        for(int i = 0; i < fields.length; i++){
-            String methodName = "get"+fields[i].getName().substring(0,1).toUpperCase()+fields[i].getName().substring(1);
+        for (Field field : fields) {
+            String methodName = "get" + field.getName().substring(0, 1).toUpperCase() + field.getName().substring(1);
             try {
                 methods.add(Product.class.getMethod(methodName));
             } catch (NoSuchMethodException e) {
@@ -92,18 +92,14 @@ public class ListPrinter implements Consumer<TextIO> {
                 if (fields[i].getType() == Product.Category.class){
                     try {
                         args.add(methods.get(i).invoke(product).toString());
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
+                    } catch (IllegalAccessException|InvocationTargetException e) {
                         e.printStackTrace();
                     }
                     continue;
                 }
                 try {
                     args.add(methods.get(i).invoke(product));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
+                } catch (IllegalAccessException|InvocationTargetException e) {
                     e.printStackTrace();
                 }
 

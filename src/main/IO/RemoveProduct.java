@@ -1,7 +1,7 @@
-package Main.IO;
+package main.IO;
 
-import Main.Client.ClientUI;
-import Main.Product;
+import main.Product;
+import main.client.ClientUI;
 import org.beryx.textio.TextIO;
 import org.beryx.textio.TextTerminal;
 
@@ -12,9 +12,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class RemoveProduct implements Function<TextIO, Product> {
-    private Product product = new Product();
+    private final Product PRODUCT = new Product();
     private int productIndex = 1;
-    private final List<Runnable> operations = new ArrayList<>();
+    private boolean confirm = false;
+    private final List<Runnable> OPERATIONS = new ArrayList<>();
 
     private int getProductIndex() {
         return productIndex;
@@ -28,16 +29,30 @@ public class RemoveProduct implements Function<TextIO, Product> {
     public Product apply(TextIO textIO) {
         TextTerminal<?> terminal = textIO.getTextTerminal();
         addTask(textIO, "Which item would you like to remove?", this::getProductIndex, this::setProductIndex, ClientUI.products.getProducts()::size);
-        operations.get(0).run();
-        product.modify(ClientUI.products.getProducts().get(getProductIndex() - 1));
-        return product;
+        OPERATIONS.get(0).run();
+        PRODUCT.modify(ClientUI.products.getProducts().get(getProductIndex() - 1));
+        confirmRemove(textIO, "Do you really want to remove: " + PRODUCT.getName() + "?\n", () -> confirm, (b) -> this.confirm = b);
+        OPERATIONS.get(1).run();
+        if (confirm){
+        return PRODUCT;
+        }
+        else{
+            return null;
+        }
     }
 
     private void addTask(TextIO textIO, String prompt, Supplier<Integer> defaultValueSupplier, Consumer<Integer> valueSetter, Supplier<Integer> maxValueSupplier) {
-        operations.add(() -> valueSetter.accept(textIO.newIntInputReader()
+        OPERATIONS.add(() -> valueSetter.accept(textIO.newIntInputReader()
                 .withDefaultValue(defaultValueSupplier.get())
                 .withMinVal(1)
                 .withMaxVal(maxValueSupplier.get())
                 .read(prompt)));
     }
+
+    private void confirmRemove(TextIO textIO, String prompt, Supplier<Boolean> defaultValueSupplier, Consumer<Boolean> valueSetter) {
+        OPERATIONS.add(() -> valueSetter.accept(textIO.newBooleanInputReader()
+                .withDefaultValue(defaultValueSupplier.get())
+                .read(prompt)));
+    }
+
 }

@@ -1,4 +1,4 @@
-package Main.Exceptions;
+package main.exceptions;
 
 public class InvalidAccountException extends Exception {
     public InvalidAccountException(String message) {

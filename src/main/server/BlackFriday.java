@@ -1,6 +1,6 @@
-package Main.Server;
-import Main.Product;
-import Main.ProductList;
+package main.server;
+import main.Product;
+import main.ProductList;
 
 import java.sql.SQLException;
 

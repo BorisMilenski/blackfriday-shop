@@ -1,8 +1,6 @@
-package Main.Client;
-import Main.Account;
-import Main.IO.Terminal;
-import Main.ProductList;
-import Main.Message;
+package main.client;
+import main.IO.Terminal;
+import main.Message;
 
 /*
 Server -> Client
@@ -17,14 +15,11 @@ public class ClientProtocol {
         try {
             switch (answer.getCode()) {
                 case VALUE:
+                case PRODUCTS:
+                case LOGIN:
                     return answer.getPayload();
                 case ERROR:
                     terminal.showError(answer.getPayload().toString());
-                    return null;
-                case PRODUCTS:
-                    return answer.getPayload();
-                case LOGIN:
-                    return answer.getPayload();
             }
         }catch (NullPointerException e){
 

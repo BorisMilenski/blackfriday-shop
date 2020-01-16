@@ -1,4 +1,4 @@
-package Main;
+package main;
 
 import java.io.Serializable;
 
@@ -15,15 +15,25 @@ public class Message implements Serializable {
         return code;
     }
 
-    public void setCode(MessageIndex code) {
-        this.code = code;
-    }
-
     public Object getPayload() {
         return payload;
     }
 
-    public void setPayload(Object payload) {
-        this.payload = payload;
+    public enum MessageIndex implements Serializable {
+        //Client -> Server
+        PRODUCTS,
+        LOGIN,
+        CREATE,
+        PURCHASE,
+        INSERT,
+        EDIT,
+        DELETE,
+        START_BLACK_FRIDAY,
+        END_BLACK_FRIDAY,
+        REVENUE,
+        //Server -> Client
+        VALUE,
+        ERROR,
+        SUCCESS
     }
 }
