@@ -1,18 +1,27 @@
 package Main;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Objects;
 
-public class ProductList {
+public class ProductList implements Serializable {
     private ArrayList<Product> products;
 
     public ProductList(ArrayList<Product> products) {
         this.products = products;
     }
 
+    public ProductList() {
+        this.products = new ArrayList<>();
+    }
+
     public boolean add(Product product) {
         return products.add(product);
+    }
+
+    public Product get(int index){
+        return products.get(index);
     }
 
     public boolean edit(Product product) {
@@ -46,40 +55,9 @@ public class ProductList {
         return products;
     }
 
-    public void sort(String sortBy) {
-        switch (sortBy.toLowerCase()) {
-            case "id":
-                products.sort(Comparator.comparing(Product::getID));
-                break;
-            case "name":
-                products.sort(Comparator.comparing(Product::getName));
-                break;
-            case "category":
-                products.sort(Comparator.comparing(Product::getCategory));
-                break;
-            case "minprice":
-                products.sort(Comparator.comparing(Product::getMinPrice));
-                break;
-            case "currprice":
-                products.sort(Comparator.comparing(Product::getPrice));
-                break;
-            case "blackfridaydiscount":
-                products.sort(Comparator.comparing(Product::getBlackfridayDiscount));
-                break;
-            case "quantity":
-                products.sort(Comparator.comparing(Product::getQuantity));
-                break;
-            case "popularity":
-                products.sort(Comparator.comparing(Product::getPopularity));
-                break;
-            default:
-                break;
-        }
-    }
-
     public static ProductList compareLists(ProductList list, ProductList sublist) {
         ProductList changedProducts = new ProductList(new ArrayList<Product>());
-        ArrayList<Product> sub = new ArrayList<>(sublist.getProducts()); //TODO: Remember - lists are reference-based! Careful with trying to copy them by using =
+        ArrayList<Product> sub = new ArrayList<>(sublist.getProducts());
         for (Product product : sub) {
             if (!(list.getProducts().contains(product))) {
                 changedProducts.add(product);

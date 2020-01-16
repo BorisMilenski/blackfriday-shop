@@ -1,12 +1,16 @@
 package Main;
 
-public class Account {
+import java.io.Serializable;
+
+public class Account implements Serializable {
     private String username;
     private String password;
+    private boolean isEmployee;
 
-    public Account(String username, String password) {
+    public Account(String username, String password, boolean isEmployee) {
         this.username = username;
         this.password = password;
+        this.isEmployee = isEmployee;
     }
 
     public Account() {
@@ -29,4 +33,11 @@ public class Account {
         this.password = password;
     }
 
+    public boolean isEmployee() {
+        return isEmployee;
+    }
+
+    public void setEmployee(boolean employee) {
+        isEmployee = employee;
+    }
 }

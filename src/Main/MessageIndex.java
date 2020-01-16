@@ -1,18 +1,21 @@
 package Main;
 
-public enum MessageIndex {
-    LIST,
-    ACC,
+import java.io.Serializable;
+
+public enum MessageIndex implements Serializable {
+    //Client -> Server
+    PRODUCTS,
+    LOGIN,
     CREATE,
     PURCHASE,
-    INS,
+    INSERT,
     EDIT,
-    DEL,
+    DELETE,
     STARTBLACKFRIDAY,
     ENDBLACKFRIDAY,
-    PRINT,
-    PRODUCTS,
-    ERRORPRIVILIGE,
-    ERRORQUANTITY,
-    ERRORSQL;
+    //Server -> Client
+    VALUE,
+    ERROR,
+    SUCCESS
+
 }

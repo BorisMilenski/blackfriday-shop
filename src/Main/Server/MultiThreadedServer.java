@@ -11,14 +11,12 @@ import java.util.HashMap;
 
 public class MultiThreadedServer implements Runnable {
 
-    protected ProductList allProducts;
+
     protected int serverPort = 8080;
     protected ServerSocket serverSocket = null;
     protected boolean isStopped = false;
     protected Thread runningThread = null;
-    protected HashMap<InetAddress, Account> activeUsers = new HashMap<>();
-    protected HashMap<InetAddress, Account> activeAdmins = new HashMap<>();
-
+    protected Server server = null;
 
     public MultiThreadedServer(int port) {
         this.serverPort = port;
@@ -43,7 +41,7 @@ public class MultiThreadedServer implements Runnable {
             }
             new Thread(
                     new ServerTask(
-                            clientSocket, "Multithreaded Server", this)
+                            clientSocket, "Multithreaded Server", server)
             ).start();
         }
         System.out.println("Server Stopped.");

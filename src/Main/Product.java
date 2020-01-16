@@ -1,23 +1,32 @@
 package Main;
-
-import Main.Exceptions.NoDiscountException;
-
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Product {
+public class Product implements Serializable {
 
     private int ID;
     private String name;
-    private String category;
-    private double price;
+    private Category category;
+    private int quantity;
+    private double normalPrice;
     private double minPrice;
     private double blackfridayDiscount;
-    private int quantity;
+    private double actualPrice;
     private double popularity;
 
-    public Product(int ID, String name, String category, double price, double minPrice, double blackfridayDiscount, int quantity) throws NoDiscountException {
+    public enum Category {
+        tech,
+        cookware,
+        misc
+    }
+
+    public double getActualPrice() {
+        return actualPrice;
+    }
+
+    public Product(int ID, String name, Category category, int quantity, double normalPrice, double minPrice, double blackfridayDiscount) {
         this.minPrice = 0;
-        this.price = 0;
+        this.normalPrice = 0;
         this.blackfridayDiscount = 0;
         this.quantity = 0;
         try {
@@ -25,39 +34,43 @@ public class Product {
             this.setName(name);
             this.setCategory(category);
             this.setMinPrice(minPrice);
-            this.setPrice(price);
+            this.setNormalPrice(normalPrice);
             this.setBlackfridayDiscount(blackfridayDiscount);
             this.setQuantity(quantity);
-        }
-        catch (ArithmeticException a){
+        } catch (ArithmeticException a) {
             throw new ArithmeticException();
-        }
-        catch (NoDiscountException e){
-            throw new NoDiscountException(this.getName());
         }
     }
 
+    public Product() {
+        this.ID = -1;
+        this.name = " ";
+        this.category = Category.misc;
+        this.normalPrice = 0;
+        this.minPrice = 0;
+        this.blackfridayDiscount = 0;
+        this.quantity = 0;
+        this.popularity = 0;
+    }
+
     public boolean modify(Product product) {
-        //TODO: Check user input for inapplicable data (possibly do checks or throw exceptions in setters). Currently a user can clear fields.
-        if (this.getName().equals(product.getName())) {
+        if (this.ID != product.getID()) {
+            this.setID(product.getID());
+        }
+        if (!this.getName().equals(product.getName())) {
             this.setName(product.getName());
         }
-        if (this.getCategory().equals(product.getCategory())) {
+        if (!this.getCategory().equals(product.getCategory())) {
             this.setCategory(product.getCategory());
         }
-        if (this.getPrice() != product.getPrice()) {
-            this.setPrice(product.getPrice());
+        if (this.getNormalPrice() != product.getNormalPrice()) {
+            this.setNormalPrice(product.getNormalPrice());
         }
         if (this.getMinPrice() != product.getMinPrice()) {
             this.setMinPrice(product.getMinPrice());
         }
         if (this.getBlackfridayDiscount() != product.getBlackfridayDiscount()) {
-            try {
-                this.setBlackfridayDiscount(product.getBlackfridayDiscount());
-            }
-            catch (NoDiscountException e){
-                System.out.println(this.getName() + "'s discount percentage is either invalid or too high");
-            }
+            this.setBlackfridayDiscount(product.getBlackfridayDiscount());
         }
         if (this.getQuantity() != product.getQuantity()) {
             this.setQuantity(product.getQuantity());
@@ -81,23 +94,23 @@ public class Product {
         this.name = name;
     }
 
-    public String getCategory() {
+    public Category getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(Category category) {
         this.category = category;
     }
 
-    public double getPrice() {
-        return price;
+    public double getNormalPrice() {
+        return normalPrice;
     }
 
-    public void setPrice(double price) throws ArithmeticException {
-        if (price < 0) {
+    public void setNormalPrice(double normalPrice) throws ArithmeticException {
+        if (normalPrice < 0) {
             throw new ArithmeticException();
         }
-        this.price = !(price > this.minPrice) ? price : this.minPrice;
+        this.normalPrice = (normalPrice > this.minPrice) ? normalPrice : this.minPrice;
     }
 
     public double getMinPrice() {
@@ -116,13 +129,12 @@ public class Product {
         return blackfridayDiscount;
     }
 
-    public void setBlackfridayDiscount(double blackfridayDiscount) throws ArithmeticException, NoDiscountException {
-        if (blackfridayDiscount < 0 || blackfridayDiscount > 1) {
+    public void setBlackfridayDiscount(double blackfridayDiscount) throws ArithmeticException {
+        if (blackfridayDiscount < 0 || blackfridayDiscount >= 1) {
             throw new ArithmeticException();
-        } else if (blackfridayDiscount * this.price >= this.minPrice) {
-            throw new NoDiscountException(this.getName());
         } else {
             this.blackfridayDiscount = blackfridayDiscount;
+            this.actualPrice = this.normalPrice * (1 - this.getBlackfridayDiscount());
         }
     }
 
@@ -152,7 +164,7 @@ public class Product {
         if (o == null || getClass() != o.getClass()) return false;
         Product product = (Product) o;
         return getID() == product.getID() &&
-                Double.compare(product.getPrice(), getPrice()) == 0 &&
+                Double.compare(product.getNormalPrice(), getNormalPrice()) == 0 &&
                 Double.compare(product.getMinPrice(), getMinPrice()) == 0 &&
                 Double.compare(product.getBlackfridayDiscount(), getBlackfridayDiscount()) == 0 &&
                 getQuantity() == product.getQuantity() &&
@@ -163,6 +175,6 @@ public class Product {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getID(), getName(), getCategory(), getPrice(), getMinPrice(), getBlackfridayDiscount(), getQuantity(), getPopularity());
+        return Objects.hash(getID(), getName(), getCategory(), getNormalPrice(), getMinPrice(), getBlackfridayDiscount(), getQuantity(), getPopularity());
     }
 }

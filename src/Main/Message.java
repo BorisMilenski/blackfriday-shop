@@ -1,16 +1,14 @@
-package Main.Server;
-
-import Main.MessageIndex;
+package Main;
 
 import java.io.Serializable;
 
 public class Message implements Serializable {
     private MessageIndex code;
-    private Object toSend;
+    private Object payload;
 
-    public Message(MessageIndex code, Object toSend) {
+    public Message(MessageIndex code, Object payload) {
         this.code = code;
-        this.toSend = toSend;
+        this.payload = payload;
     }
 
     public MessageIndex getCode() {
@@ -21,11 +19,11 @@ public class Message implements Serializable {
         this.code = code;
     }
 
-    public Object getToSend() {
-        return toSend;
+    public Object getPayload() {
+        return payload;
     }
 
-    public void setToSend(Object toSend) {
-        this.toSend = toSend;
+    public void setPayload(Object payload) {
+        this.payload = payload;
     }
 }

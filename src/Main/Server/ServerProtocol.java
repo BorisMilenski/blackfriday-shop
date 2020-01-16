@@ -1,89 +1,103 @@
 package Main.Server;
 
 import Main.*;
+import Main.Exceptions.InvalidAccountException;
 import Main.Exceptions.QuantityException;
-import com.mysql.cj.result.SqlDateValueFactory;
 
+import java.net.InetAddress;
 import java.sql.SQLException;
 
 /*
 Client -> Server
 
-LIST - to request allProducts
-ACC <Account> - to login
+PRODUCTS - to request allProducts
+LOGIN <Account> - to login
 CREATE <Account> - to create account
 PURCHASE <ProductList> - to purchase
-INS <ProductList> - to insert
+INSERT <ProductList> - to insert
 EDIT <ProductList> - to edit
-DEL <ProductList> - to delete
-STARTBLACKFRIDAY --- ProductList - to start BlackFriday
-ENDBLACKFRIDAY --- null - to end BlackFriday
+DELETE <ProductList> - to delete
+STARTBLACKFRIDAY <ProductList> - to start BlackFriday on products in list
+ENDBLACKFRIDAY - to end BlackFriday for all products
 
 */
 public class ServerProtocol {
 
-    public static Object parseMessage(Message message, Account user, MultiThreadedServer server) throws QuantityException, SQLException {
+    public static Message parseMessage(Message message, Account user, InetAddress inetAddress) throws QuantityException, SQLException, InvalidAccountException {
         switch (message.getCode()) {
-            case LIST:
-                return server.allProducts;
-            case ACC:
-                if (DBA.ValidateAccount((Account) message.getToSend())) //TODO: Validate accounts and add to appropriate collection - admin or customer
+            case PRODUCTS:
+                return new Message(MessageIndex.PRODUCTS, Server.getProducts());
+            case LOGIN:
+                Account account = (Account) message.getPayload();
+                if ((account = DBA.checkForExistingAccount(account)) != null)
                 {
-                    return "Logic successful";
-                } else {
-                    return "Logic unsuccessful. Please check your username and password and try again.";
+                    if (account.isEmployee() && !Server.getActiveEmployees().containsKey(inetAddress)) {
+                        Server.addActiveEmployee(inetAddress, account);
+                    } else if (!account.isEmployee() && !Server.getActiveUsers().containsKey(inetAddress)) {
+                        Server.addActiveUser(inetAddress, account);
+                    }
                 }
+                else{
+                    throw new InvalidAccountException("Account not found");
+                }
+                return new Message(MessageIndex.LOGIN, account);
             case CREATE:
-                //TODO: Create accounts
-                break;
+                DBA.createAccount((Account) message.getPayload());
+                return new Message(MessageIndex.CREATE, message.getPayload());
             case PURCHASE:
-                ProductList toPurchase = (ProductList) message.getToSend();
+                ProductList toPurchase = (ProductList) message.getPayload();
                 for (Product item : toPurchase.getProducts()) {
                     try {
-                        ManageSales.executeSale(user, item, server.allProducts, new Account("DBM", "Tn65z6&dDObh@YJRRt39OwhV"));
+                        ManageSales.executeSale(user, item, Server.getProducts());
                     } catch (QuantityException e) {
                         throw new QuantityException(item.getName());
                     }
                 }
-                break;
-            case INS:
-                ProductList toInsert = (ProductList) message.getToSend();
+                Server.updateProducts();
+                return new Message(MessageIndex.SUCCESS, true);
+            case INSERT:
+                ProductList toInsert = (ProductList) message.getPayload();
                 for (Product item : toInsert.getProducts()) {
                     try {
-                        DBA.insertIntoProducts(new Account("DBM", "Tn65z6&dDObh@YJRRt39OwhV"), item);
+                        DBA.insertIntoProducts(item);
                     } catch (SQLException e) {
                         throw new SQLException(e.getCause());
                     }
                 }
-                break;
+                Server.updateProducts();
+                return new Message(MessageIndex.SUCCESS, true);
             case EDIT:
-                ProductList toEdit = (ProductList) message.getToSend();
+                ProductList toEdit = (ProductList) message.getPayload();
                 for (Product item : toEdit.getProducts()) {
                     try {
-                        DBA.updateProduct(new Account("DBM", "Tn65z6&dDObh@YJRRt39OwhV"), item);
+                        DBA.updateProduct(item);
                     } catch (SQLException e) {
                         throw new SQLException(e.getCause());
                     }
                 }
-                break;
-            case DEL:
-                ProductList toDelete = (ProductList) message.getToSend();
+                Server.updateProducts();
+                return new Message(MessageIndex.SUCCESS, true);
+            case DELETE:
+                ProductList toDelete = (ProductList) message.getPayload();
                 for (Product item : toDelete.getProducts()) {
                     try {
-                        DBA.deleteFromProducts(new Account("DBM", "Tn65z6&dDObh@YJRRt39OwhV"), item);
+                        DBA.deleteFromProducts(item);
                     } catch (SQLException e) {
                         throw new SQLException(e.getCause());
                     }
                 }
-                break;
+                Server.updateProducts();
+                return new Message(MessageIndex.SUCCESS, true);
             case STARTBLACKFRIDAY:
-                ProductList promotionalItems = (ProductList) message.getToSend();
-                BlackFriday.startCampaign(new Account("DBM", "Tn65z6&dDObh@YJRRt39OwhV"), promotionalItems);
-                break;
+                ProductList promotionalItems = (ProductList) message.getPayload();
+                BlackFriday.startCampaign(promotionalItems);
+                Server.updateProducts();
+                return new Message(MessageIndex.SUCCESS, true);
             case ENDBLACKFRIDAY:
-                ProductList items = (ProductList) message.getToSend();
-                BlackFriday.endCampaign(new Account("DBM", "Tn65z6&dDObh@YJRRt39OwhV"), items);
-                break;
+                ProductList items = (ProductList) message.getPayload();
+                BlackFriday.endCampaign(items);
+                Server.updateProducts();
+                return new Message(MessageIndex.SUCCESS, true);
         }
         return null;
     }
